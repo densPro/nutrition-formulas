@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Molécula Calórica</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+<style>
+/* ── MD3 design tokens ───────────────────────────────────── */
+:root {
+  --md-primary:        #1565C0;
+  --md-primary-cont:   #E3F2FD;
+  --md-secondary:      #00695C;
+  --md-error:          #B00020;
+  --md-error-cont:     #FDECEA;
+  --md-surface:        #F0F4FA;
+  --md-surface-1:      #FFFFFF;
+  --md-surface-2:      #F1F4F9;
+  --md-outline:        #C5CAD3;
+  --md-outline-var:    #E2E6EC;
+  --md-on-surface:     #1A1C1E;
+  --md-on-surface-var: #42474E;
+  --md-shadow:         0 1px 3px rgba(0,0,0,.12), 0 1px 2px rgba(0,0,0,.08);
+  --md-shadow-2:       0 3px 8px rgba(0,0,0,.12), 0 2px 4px rgba(0,0,0,.08);
+  --md-radius-sm:      8px;
+  --md-radius-md:      12px;
+  --md-radius-lg:      16px;
+
+  /* per-macro palette */
+  --carb-dark:  #0D47A1;
+  --carb-mid:   #1565C0;
+  --carb-soft:  #E3F2FD;
+  --carb-line:  #90CAF9;
+  --prot-dark:  #1B5E20;
+  --prot-mid:   #2E7D32;
+  --prot-soft:  #E8F5E9;
+  --prot-line:  #A5D6A7;
+  --lip-dark:   #4A148C;
+  --lip-mid:    #6A1B9A;
+  --lip-soft:   #F3E5F5;
+  --lip-line:   #CE93D8;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Roboto', sans-serif;
+  background: var(--md-surface);
+  color: var(--md-on-surface);
+  min-height: 100vh;
+  padding: 24px 16px 56px;
+}
+
+/* ── App bar ─────────────────────────────────────────────── */
+.app-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: 960px;
+  margin: 0 auto 20px;
+}
+.app-bar .icon-wrap {
+  width: 46px; height: 46px;
+  border-radius: 50%;
+  background: var(--md-primary);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  box-shadow: var(--md-shadow);
+}
+.app-bar .icon-wrap .material-icons-round { color: #fff; font-size: 24px; }
+.app-bar h1 { font-size: 22px; font-weight: 500; letter-spacing: .01em; }
+.app-bar .subtitle { font-size: 12px; color: var(--md-on-surface-var); margin-top: 2px; }
+
+/* ── Card shell ──────────────────────────────────────────── */
+.card {
+  background: var(--md-surface-1);
+  border-radius: var(--md-radius-lg);
+  box-shadow: var(--md-shadow);
+  max-width: 960px;
+  margin: 0 auto 16px;
+  overflow: hidden;
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px 12px;
+  border-bottom: 1px solid var(--md-outline-var);
+}
+.card-header .material-icons-round { font-size: 20px; }
+.card-header h2 {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--md-on-surface-var);
+}
+.card-body { padding: 20px; }
+
+/* ── VET input ───────────────────────────────────────────── */
+.vet-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.vet-field { display: flex; flex-direction: column; gap: 4px; }
+.vet-field label {
+  font-size: 11px; font-weight: 500; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--md-primary);
+}
+.vet-field input {
+  width: 140px;
+  padding: 10px 14px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 22px; font-weight: 500;
+  color: var(--md-primary);
+  background: var(--md-primary-cont);
+  border: 2px solid var(--md-primary);
+  border-radius: var(--md-radius-sm);
+  outline: none; text-align: center;
+  -moz-appearance: textfield;
+  transition: box-shadow .2s;
+}
+.vet-field input::-webkit-outer-spin-button,
+.vet-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
+.vet-field input:focus { box-shadow: 0 0 0 3px rgba(21,101,192,.22); }
+.vet-unit { font-size: 14px; color: var(--md-on-surface-var); padding-top: 18px; }
+
+/* ── THE TABLE ───────────────────────────────────────────── */
+.tbl-wrap { overflow-x: auto; }
+
+table.mc {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 680px;
+}
+
+/* all cells base */
+table.mc th,
+table.mc td {
+  border: 1px solid var(--md-outline-var);
+  padding: 0;
+  vertical-align: middle;
+  text-align: center;
+}
+
+/* ── Column header row ───────────────────────────────────── */
+table.mc thead th {
+  background: var(--md-surface-2);
+  color: var(--md-on-surface-var);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  padding: 10px 8px;
+  border-bottom: 2px solid var(--md-outline);
+  white-space: nowrap;
+}
+table.mc thead th:first-child { text-align: left; padding-left: 16px; }
+
+/* ── Macro label cells (left col, rowspan) ───────────────── */
+td.macro-cell {
+  font-weight: 500;
+  font-size: 13px;
+  padding: 0 16px;
+  text-align: left;
+  width: 160px;
+  white-space: nowrap;
+}
+td.macro-cell .range {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 400;
+  opacity: .65;
+  margin-top: 3px;
+}
+
+/* colour bands per macro */
+.row-carb td { background: #FAFCFF; }
+.row-prot td { background: #FAFFFE; }
+.row-lip  td { background: #FDFAFF; }
+
+td.macro-cell.carb { color: var(--carb-mid); border-left: 4px solid var(--carb-mid); background: var(--carb-soft); }
+td.macro-cell.prot { color: var(--prot-mid); border-left: 4px solid var(--prot-mid); background: var(--prot-soft); }
+td.macro-cell.lip  { color: var(--lip-mid);  border-left: 4px solid var(--lip-mid);  background: var(--lip-soft);  }
+
+/* ── Sub-category label cells ────────────────────────────── */
+td.sub-cell {
+  text-align: left;
+  padding: 9px 12px 9px 28px;
+  font-size: 12px;
+  color: var(--md-on-surface-var);
+  white-space: nowrap;
+  position: relative;
+}
+td.sub-cell::before {
+  content: '↳';
+  position: absolute;
+  left: 14px;
+  opacity: .35;
+}
+
+/* ── Numeric output cells ────────────────────────────────── */
+td.num {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--md-on-surface);
+  padding: 9px 12px;
+  white-space: nowrap;
+}
+td.num.bold { font-weight: 500; }
+
+/* FA chip */
+.fa-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--md-surface-2);
+  border: 1px solid var(--md-outline);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--md-on-surface-var);
+}
+
+/* ── Input cells ─────────────────────────────────────────── */
+td.inp { padding: 6px 8px; }
+
+input.pct-input {
+  width: 62px;
+  padding: 7px 6px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  border-radius: var(--md-radius-sm);
+  border: 1.5px solid var(--md-outline);
+  background: var(--md-surface-2);
+  color: var(--md-on-surface);
+  outline: none;
+  -moz-appearance: textfield;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+}
+input.pct-input::-webkit-outer-spin-button,
+input.pct-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+/* carb inputs */
+input.pct-input.carb { border-color: var(--carb-line); color: var(--carb-mid); background: var(--carb-soft); }
+input.pct-input.carb:focus { border-color: var(--carb-mid); box-shadow: 0 0 0 3px rgba(21,101,192,.16); }
+/* prot inputs */
+input.pct-input.prot { border-color: var(--prot-line); color: var(--prot-mid); background: var(--prot-soft); }
+input.pct-input.prot:focus { border-color: var(--prot-mid); box-shadow: 0 0 0 3px rgba(46,125,50,.16); }
+/* lip inputs */
+input.pct-input.lip  { border-color: var(--lip-line);  color: var(--lip-mid);  background: var(--lip-soft); }
+input.pct-input.lip:focus  { border-color: var(--lip-mid);  box-shadow: 0 0 0 3px rgba(106,27,154,.16); }
+/* sub inputs (neutral) */
+input.pct-input.sub { border-color: var(--md-outline); color: var(--md-on-surface); }
+input.pct-input.sub:focus { border-color: var(--md-primary); box-shadow: 0 0 0 3px rgba(21,101,192,.13); background: var(--md-primary-cont); }
+
+/* ── Total row ───────────────────────────────────────────── */
+tr.total-row td {
+  background: var(--md-surface-2) !important;
+  border-top: 2px solid var(--md-outline);
+  font-weight: 500;
+  padding: 10px 12px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 13px;
+}
+tr.total-row td:first-child {
+  font-family: 'Roboto', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--md-on-surface-var);
+  text-align: left;
+  padding-left: 16px;
+}
+
+/* ── Totals summary chips ────────────────────────────────── */
+.totals-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.total-chip {
+  background: var(--md-surface-2);
+  border-radius: var(--md-radius-md);
+  border: 1.5px solid var(--md-outline-var);
+  padding: 12px 14px;
+  text-align: center;
+}
+.total-chip .t-label {
+  font-size: 10px; font-weight: 500; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--md-on-surface-var); margin-bottom: 5px;
+}
+.total-chip .t-value {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 20px; font-weight: 500; color: var(--md-on-surface);
+}
+.total-chip .t-unit { font-size: 11px; color: var(--md-on-surface-var); margin-left: 2px; }
+.total-chip.primary { background: var(--md-primary-cont); border-color: var(--carb-line); }
+.total-chip.primary .t-value { color: var(--md-primary); }
+
+/* ── Badges ──────────────────────────────────────────────── */
+.badges-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 12px; border-radius: 20px;
+  font-size: 12px; font-weight: 500;
+  border: 1.5px solid transparent;
+  transition: background .2s, color .2s;
+}
+.badge .material-icons-round { font-size: 14px; }
+.badge.neutral { background: var(--md-surface-2); color: var(--md-on-surface-var); border-color: var(--md-outline-var); }
+.badge.ok      { background: #E8F5E9; color: #1B5E20; border-color: #A5D6A7; }
+.badge.warn    { background: #FFF3E0; color: #E65100; border-color: #FFCC80; }
+.badge.err     { background: var(--md-error-cont); color: var(--md-error); border-color: #EF9A9A; }
+
+/* ── Info snackbar ───────────────────────────────────────── */
+.info-snack {
+  border-radius: var(--md-radius-md);
+  padding: 12px 16px;
+  font-size: 13px; line-height: 1.5;
+  display: flex; align-items: flex-start; gap: 10px;
+  border: 1.5px solid transparent;
+  transition: background .25s, border-color .25s;
+}
+.info-snack .material-icons-round { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.info-snack.ok   { background: #E8F5E9; border-color: #A5D6A7; color: #1B5E20; }
+.info-snack.warn { background: #FFF3E0; border-color: #FFCC80; color: #E65100; }
+.info-snack.err  { background: var(--md-error-cont); border-color: #EF9A9A; color: var(--md-error); }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .totals-bar { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- App bar -->
+<div class="app-bar">
+  <div class="icon-wrap">
+    <span class="material-icons-round">local_fire_department</span>
+  </div>
+  <div>
+    <h1>Molécula Calórica</h1>
+    <div class="subtitle">Distribución de macronutrientes por VET</div>
+  </div>
+</div>
+
+<!-- VET card -->
+<div class="card">
+  <div class="card-header">
+    <span class="material-icons-round" style="color:var(--md-primary)">bolt</span>
+    <h2>Valor Energético Total</h2>
+  </div>
+  <div class="card-body">
+    <div class="vet-row">
+      <div class="vet-field">
+        <label>VET</label>
+        <input type="number" id="vet" value="1436" min="500" max="9999" step="1" oninput="calcular()">
+      </div>
+      <span class="vet-unit">kcal / día</span>
+    </div>
+  </div>
+</div>
+
+<!-- Table card -->
+<div class="card">
+  <div class="card-header">
+    <span class="material-icons-round" style="color:var(--md-primary)">table_chart</span>
+    <h2>Macronutrientes</h2>
+  </div>
+  <div class="card-body" style="padding:0 0 4px;">
+    <div class="tbl-wrap">
+      <table class="mc">
+        <thead>
+          <tr>
+            <th style="width:160px">Macronutriente</th>
+            <th style="width:80px">% (D)</th>
+            <th style="width:90px">kcal</th>
+            <th style="width:52px">FA</th>
+            <th style="width:96px">Gramos</th>
+            <th style="width:180px">Subcategoría</th>
+            <th style="width:80px">% (I)</th>
+            <th style="width:90px">Gramos</th>
+            <th style="width:90px">Total g</th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- ── CARBOHIDRATOS ── -->
+          <tr class="row-carb">
+            <td rowspan="2" class="macro-cell carb">
+              Carbohidratos
+              <span class="range">55 – 65%</span>
+            </td>
+            <td rowspan="2" class="inp">
+              <input class="pct-input carb" type="number" id="d_carb" value="55" min="0" max="100" step="1" oninput="calcular()">
+            </td>
+            <td rowspan="2" class="num bold" id="kcal_carb"></td>
+            <td rowspan="2" class="num"><span class="fa-chip">4</span></td>
+            <td rowspan="2" class="num bold" id="g_carb"></td>
+            <td class="sub-cell">Simple 5–10%</td>
+            <td class="inp"><input class="pct-input sub" type="number" id="i_simple" value="11" min="0" max="100" step="1" oninput="calcular()"></td>
+            <td class="num" id="g_simple"></td>
+            <td rowspan="2" class="num bold" id="g_carb2"></td>
+          </tr>
+          <tr class="row-carb">
+            <td class="sub-cell">Compuestos 90–95%</td>
+            <td class="inp"><input class="pct-input sub" type="number" id="i_comp" value="89" min="0" max="100" step="1" oninput="calcular()"></td>
+            <td class="num" id="g_comp"></td>
+          </tr>
+
+          <!-- ── PROTEÍNA ── -->
+          <tr class="row-prot">
+            <td rowspan="2" class="macro-cell prot">
+              Proteína
+              <span class="range">15 – 25%</span>
+            </td>
+            <td rowspan="2" class="inp">
+              <input class="pct-input prot" type="number" id="d_prot" value="20" min="0" max="100" step="1" oninput="calcular()">
+            </td>
+            <td rowspan="2" class="num bold" id="kcal_prot"></td>
+            <td rowspan="2" class="num"><span class="fa-chip">4</span></td>
+            <td rowspan="2" class="num bold" id="g_prot"></td>
+            <td class="sub-cell">Pro. Animal 50%</td>
+            <td class="inp"><input class="pct-input sub" type="number" id="i_animal" value="50" min="0" max="100" step="1" oninput="calcular()"></td>
+            <td class="num" id="g_animal"></td>
+            <td rowspan="2" class="num bold" id="g_prot2"></td>
+          </tr>
+          <tr class="row-prot">
+            <td class="sub-cell">Pro. Vegetal 50%</td>
+            <td class="inp"><input class="pct-input sub" type="number" id="i_vegetal" value="50" min="0" max="100" step="1" oninput="calcular()"></td>
+            <td class="num" id="g_vegetal"></td>
+          </tr>
+
+          <!-- ── LÍPIDOS ── -->
+          <tr class="row-lip">
+            <td rowspan="3" class="macro-cell lip">
+              Lípidos
+              <span class="range">25 – 35%</span>
+            </td>
+            <td rowspan="3" class="inp">
+              <input class="pct-input lip" type="number" id="d_lip" value="25" min="0" max="100" step="1" oninput="calcular()">
+            </td>
+            <td rowspan="3" class="num bold" id="kcal_lip"></td>
+            <td rowspan="3" class="num"><span class="fa-chip">9</span></td>
+            <td rowspan="3" class="num bold" id="g_lip"></td>
+            <td class="sub-cell">Saturadas 10–7%</td>
+            <td class="inp"><input class="pct-input sub" type="number" id="i_sat" value="10" min="0" max="100" step="1" oninput="calcular()"></td>
+            <td class="num" id="g_sat"></td>
+            <td rowspan="3" class="num bold" id="g_lip2"></td>
+          </tr>
+          <tr class="row-lip">
+            <td class="sub-cell">Monosaturadas 10–12%</td>
+            <td class="inp"><input class="pct-input sub" type="number" id="i_mono" value="12" min="0" max="100" step="1" oninput="calcular()"></td>
+            <td class="num" id="g_mono"></td>
+          </tr>
+          <tr class="row-lip">
+            <td class="sub-cell">Polisaturadas 10–15%</td>
+            <td class="inp"><input class="pct-input sub" type="number" id="i_poli" value="8" min="0" max="100" step="1" oninput="calcular()"></td>
+            <td class="num" id="g_poli"></td>
+          </tr>
+
+          <!-- ── TOTALS ── -->
+          <tr class="total-row">
+            <td>Total</td>
+            <td id="total_pct"></td>
+            <td id="total_kcal"></td>
+            <td></td>
+            <td id="total_g"></td>
+            <td></td>
+            <td>—</td>
+            <td></td>
+            <td id="total_sub_g"></td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Summary card -->
+<div class="card">
+  <div class="card-header">
+    <span class="material-icons-round" style="color:var(--md-secondary)">summarize</span>
+    <h2>Resumen</h2>
+  </div>
+  <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
+
+    <div class="totals-bar">
+      <div class="total-chip primary">
+        <div class="t-label">Total kcal</div>
+        <div><span class="t-value" id="s_total_kcal">—</span><span class="t-unit">kcal</span></div>
+      </div>
+      <div class="total-chip">
+        <div class="t-label">Total %</div>
+        <div><span class="t-value" id="s_total_pct">—</span><span class="t-unit">%</span></div>
+      </div>
+      <div class="total-chip">
+        <div class="t-label">Total gramos</div>
+        <div><span class="t-value" id="s_total_g">—</span><span class="t-unit">g</span></div>
+      </div>
+      <div class="total-chip">
+        <div class="t-label">Sub-gramos</div>
+        <div><span class="t-value" id="s_total_sub_g">—</span><span class="t-unit">g</span></div>
+      </div>
+    </div>
+
+    <div class="badges-row">
+      <span id="badge_macro"    class="badge neutral"><span class="material-icons-round">donut_large</span> Macro —</span>
+      <span id="badge_carb_sub" class="badge neutral"><span class="material-icons-round">grain</span> Carb sub —</span>
+      <span id="badge_prot_sub" class="badge neutral"><span class="material-icons-round">fitness_center</span> Prot sub —</span>
+      <span id="badge_lip_sub"  class="badge neutral"><span class="material-icons-round">opacity</span> Líp sub —</span>
+    </div>
+
+    <div id="info-snack" class="info-snack ok">
+      <span class="material-icons-round">check_circle</span>
+      <span id="info-text"></span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function r2(n) { return Math.round(n); }
+
+function setBadge(id, sum, label, icon) {
+  const el = document.getElementById(id);
+  const ok  = Math.abs(sum - 100) < 0.01;
+  const cls = ok ? 'ok' : Math.abs(sum - 100) < 5 ? 'warn' : 'err';
+  el.className = 'badge ' + cls;
+  el.innerHTML = `<span class="material-icons-round">${icon}</span> ${label}: ${r2(sum)}%`;
+}
+
+function calcular() {
+  const vet = parseFloat(document.getElementById('vet').value) || 0;
+
+  // ── Column D inputs ──────────────────────────────────────
+  const pCarb = parseFloat(document.getElementById('d_carb').value) || 0;
+  const pProt = parseFloat(document.getElementById('d_prot').value) || 0;
+  const pLip  = parseFloat(document.getElementById('d_lip').value)  || 0;
+
+  // ── Column I inputs ──────────────────────────────────────
+  const iSimple = parseFloat(document.getElementById('i_simple').value) || 0;
+  const iComp   = parseFloat(document.getElementById('i_comp').value)   || 0;
+  const iAnimal = parseFloat(document.getElementById('i_animal').value) || 0;
+  const iVeg    = parseFloat(document.getElementById('i_vegetal').value)|| 0;
+  const iSat    = parseFloat(document.getElementById('i_sat').value)    || 0;
+  const iMono   = parseFloat(document.getElementById('i_mono').value)   || 0;
+  const iPoli   = parseFloat(document.getElementById('i_poli').value)   || 0;
+
+  // ── Macros — full precision ──────────────────────────────
+  const kcalCarb = vet * pCarb / 100;
+  const kcalProt = vet * pProt / 100;
+  const kcalLip  = vet * pLip  / 100;
+
+  const gCarb = kcalCarb / 4;
+  const gProt = kcalProt / 4;
+  const gLip  = kcalLip  / 9;
+
+  // ── Subcats Carbohidratos ────────────────────────────────
+  const gSimple = gCarb * iSimple / 100;
+  const gComp   = gCarb * iComp   / 100;
+
+  // ── Subcats Proteínas ────────────────────────────────────
+  const gAnimal = gProt * iAnimal / 100;
+  const gVeg    = gProt * iVeg    / 100;
+
+  // ── Subcats Lípidos (regla de 3 sobre total sub%) ────────
+  const totalLipSubPct = iSat + iMono + iPoli;
+  const gSat  = totalLipSubPct > 0 ? gLip * iSat  / totalLipSubPct : 0;
+  const gMono = totalLipSubPct > 0 ? gLip * iMono / totalLipSubPct : 0;
+  const gPoli = totalLipSubPct > 0 ? gLip * iPoli / totalLipSubPct : 0;
+
+  // ── Totals — full precision ──────────────────────────────
+  const totalPct  = pCarb + pProt + pLip;
+  const totalKcal = kcalCarb + kcalProt + kcalLip;
+  const totalG    = gCarb + gProt + gLip;
+  const totalSubG = gSimple + gComp + gAnimal + gVeg + gSat + gMono + gPoli;
+
+  // ── Render — r2 only at display time ────────────────────
+  document.getElementById('kcal_carb').textContent = r2(kcalCarb);
+  document.getElementById('kcal_prot').textContent = r2(kcalProt);
+  document.getElementById('kcal_lip').textContent  = r2(kcalLip);
+
+  document.getElementById('g_carb').textContent  = r2(gCarb);
+  document.getElementById('g_prot').textContent  = r2(gProt);
+  document.getElementById('g_lip').textContent   = r2(gLip);
+  document.getElementById('g_carb2').textContent = r2(gCarb);
+  document.getElementById('g_prot2').textContent = r2(gProt);
+  document.getElementById('g_lip2').textContent  = r2(gLip);
+
+  document.getElementById('g_simple').textContent  = r2(gSimple);
+  document.getElementById('g_comp').textContent    = r2(gComp);
+  document.getElementById('g_animal').textContent  = r2(gAnimal);
+  document.getElementById('g_vegetal').textContent = r2(gVeg);
+  document.getElementById('g_sat').textContent     = r2(gSat);
+  document.getElementById('g_mono').textContent    = r2(gMono);
+  document.getElementById('g_poli').textContent    = r2(gPoli);
+
+  // table total row
+  document.getElementById('total_pct').textContent   = r2(totalPct) + '%';
+  document.getElementById('total_kcal').textContent  = r2(totalKcal);
+  document.getElementById('total_g').textContent     = r2(totalG);
+  document.getElementById('total_sub_g').textContent = r2(totalSubG);
+
+  // summary chips
+  document.getElementById('s_total_kcal').textContent  = r2(totalKcal);
+  document.getElementById('s_total_pct').textContent   = r2(totalPct);
+  document.getElementById('s_total_g').textContent     = r2(totalG);
+  document.getElementById('s_total_sub_g').textContent = r2(totalSubG);
+
+  // ── Badges ───────────────────────────────────────────────
+  const subCarbSum = iSimple + iComp;
+  const subProtSum = iAnimal + iVeg;
+  const subLipSum  = iSat + iMono + iPoli;
+
+  setBadge('badge_macro',    totalPct,   'Macro',    'donut_large');
+  setBadge('badge_carb_sub', subCarbSum, 'Carb sub', 'grain');
+  setBadge('badge_prot_sub', subProtSum, 'Prot sub', 'fitness_center');
+
+  const badgeLip = document.getElementById('badge_lip_sub');
+  badgeLip.className = 'badge ok';
+  badgeLip.innerHTML = `<span class="material-icons-round">opacity</span> Líp sub: ${r2(subLipSum)}%`;
+
+  // ── Snackbar ─────────────────────────────────────────────
+  const snack   = document.getElementById('info-snack');
+  const infoTxt = document.getElementById('info-text');
+  const msgs = [];
+  let status = 'ok';
+
+  if (Math.abs(totalPct - 100) > 0.01) {
+    msgs.push(`Los % de macros suman ${r2(totalPct)}% — deben sumar 100%.`);
+    status = 'err';
+  }
+  if (pCarb < 55 || pCarb > 65) { msgs.push('Carbohidratos fuera del rango 55–65%.'); if (status !== 'err') status = 'warn'; }
+  if (pProt < 15 || pProt > 25) { msgs.push('Proteína fuera del rango 15–25%.');       if (status !== 'err') status = 'warn'; }
+  if (pLip  < 25 || pLip  > 35) { msgs.push('Lípidos fuera del rango 25–35%.');         if (status !== 'err') status = 'warn'; }
+  if (Math.abs(subCarbSum - 100) > 0.01) { msgs.push(`Carb sub suman ${r2(subCarbSum)}%.`); if (status !== 'err') status = 'warn'; }
+  if (Math.abs(subProtSum - 100) > 0.01) { msgs.push(`Prot sub suman ${r2(subProtSum)}%.`); if (status !== 'err') status = 'warn'; }
+
+  const icon = status === 'ok' ? 'check_circle' : status === 'warn' ? 'warning' : 'error';
+  snack.className = 'info-snack ' + status;
+  snack.querySelector('.material-icons-round').textContent = icon;
+  infoTxt[msgs.length ? 'innerHTML' : 'textContent'] =
+    msgs.length ? msgs.join(' &nbsp;·&nbsp; ') : `Todo correcto — VET ${r2(vet)} kcal · ${r2(totalG)} g/día`;
+}
+
+calcular();
+</script>
+</body>
+</html>
